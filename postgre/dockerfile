@@ -1,0 +1,6 @@
+FROM postgres:13-alpine
+
+RUN apk add --no-cache musl-locales 
+ENV LANG en_US.UTF-8
+
+COPY ./sql/init.sql /docker-entrypoint-initdb.d/

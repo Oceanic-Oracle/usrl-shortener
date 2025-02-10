@@ -1,0 +1,47 @@
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: ./build/app.dockerfile 
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./app/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - geo-network
+
+  postgres:
+    build:
+      context: ./postgre
+      dockerfile: Dockerfile
+    env_file:
+      - ./postgre/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgre/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - geo-network
+
+  geo_pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.ru
+      PGADMIN_DEFAULT_PASSWORD: admin
+    networks:
+      - geo-network
+
+networks:
+  geo-network:
+    driver: bridge
