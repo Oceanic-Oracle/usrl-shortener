@@ -1,6 +1,7 @@
 package postgre
 
 import (
+	"context"
 	"log/slog"
 	"url-shortener/internal/storage/url"
 
@@ -12,11 +13,11 @@ type repository struct {
 	logger *slog.Logger
 }
 
-func (r *repository) SaveUrl(string) error {
+func (r *repository) SaveUrl(context.Context, string, string) error {
 	return nil
 }
 
-func (r *repository) GetUrl(string) (string, error) {
+func (r *repository) GetUrl(context.Context, string) (string, error) {
 	return "", nil
 }
 

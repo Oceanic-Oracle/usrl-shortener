@@ -1,6 +1,8 @@
 package url
 
+import "context"
+
 type UrlRepository interface {
-	SaveUrl(string) error
-	GetUrl(string) (string, error)
+	SaveUrl(context.Context, string, string) error
+	GetUrl(context.Context, string) (string, error)
 }

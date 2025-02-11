@@ -1,0 +1,28 @@
+//protoc -I proto --go_out=paths=source_relative:app/internal/api/gen --go-grpc_out=paths=source_relative:app/internal/api/gen proto/api.proto
+
+syntax = "proto3";
+
+package api;
+
+option go_package = "internal/api/gen";
+
+service UrlShortener {
+    rpc RegUrl(RegUrlReq)   returns(RegUrlResp) {}
+    rpc GetUrl(GetUrlReq)   returns(GetUrlResp) {}
+}
+
+message RegUrlReq {
+    string  Url = 1;
+}
+
+message RegUrlResp {
+    string ShortUrl = 1;
+}
+
+message GetUrlReq {
+    string ShortUrl = 1;
+}
+
+message GetUrlResp {
+    string Url = 1;
+}

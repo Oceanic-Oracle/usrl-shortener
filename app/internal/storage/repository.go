@@ -19,7 +19,7 @@ const (
 )
 
 type Repositories struct {
-	url url.UrlRepository
+	Url url.UrlRepository
 
 	pool *pgxpool.Pool
 }
@@ -27,19 +27,19 @@ type Repositories struct {
 func NewClient(ctx context.Context, cfg *config.StorageCfg, logger *slog.Logger) (client *Repositories) {
 	switch cfg.StorageType {
 	case postgreType:
-		pool, err := postgreHandler(ctx, cfg, "disable")
+		pool, err := postgreHandler(ctx, cfg)
 		if err != nil {
 			log.Fatalf("failed to connect to PostgreSQL: %v", err)
 		} else {
 			logger.Info("Successfull connect to PostgreSQL")
 		}
 		client = &Repositories{
-			url:  postgre.New(pool, logger),
+			Url:  postgre.New(pool, logger),
 			pool: pool,
 		}
 	case inMemoryType:
 		client = &Repositories{
-			url:  inmemory.New(logger),
+			Url:  inmemory.New(logger),
 			pool: nil,
 		}
 	default:
@@ -55,12 +55,12 @@ func NewClient(ctx context.Context, cfg *config.StorageCfg, logger *slog.Logger)
 func (r *Repositories) Close() {
 	if r.pool != nil {
 		r.pool.Close()
-	}
+	}	
 }
 
-func postgreHandler(ctx context.Context, cfg *config.StorageCfg, sslmode string) (*pgxpool.Pool, error) {
+func postgreHandler(ctx context.Context, cfg *config.StorageCfg) (*pgxpool.Pool, error) {
 	return pgxpool.New(ctx, fmt.Sprintf(
-		"postgresql://%s:%s@postgres:5432/%s?sslmode=%s",
-		cfg.User, cfg.Password, cfg.DataBase, sslmode,
+		"postgresql://%s:%s@%s:%s/%s",
+		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DataBase,
 	))
 }

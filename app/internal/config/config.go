@@ -15,6 +15,7 @@ type Config struct {
 type StorageCfg struct {
 	StorageType string `env:"STORAGE_TYPE"`
 	Port        string `env:"PORT"`
+	Host        string `env:"HOST"`
 	User        string `env:"POSTGRES_USER"`
 	Password    string `env:"POSTGRES_PASSWORD"`
 	DataBase    string `env:"POSTGRES_DB"`
