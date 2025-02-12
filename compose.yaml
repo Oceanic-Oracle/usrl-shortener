@@ -10,8 +10,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - geo-network
 
   postgres:
     build:
@@ -29,8 +27,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 5s
-    networks:
-      - geo-network
 
   geo_pgadmin:
     image: dpage/pgadmin4
@@ -39,9 +35,3 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.ru
       PGADMIN_DEFAULT_PASSWORD: admin
-    networks:
-      - geo-network
-
-networks:
-  geo-network:
-    driver: bridge

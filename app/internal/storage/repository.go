@@ -59,8 +59,17 @@ func (r *Repositories) Close() {
 }
 
 func postgreHandler(ctx context.Context, cfg *config.StorageCfg) (*pgxpool.Pool, error) {
-	return pgxpool.New(ctx, fmt.Sprintf(
+	pool, err := pgxpool.New(ctx, fmt.Sprintf(
 		"postgresql://%s:%s@%s:%s/%s",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DataBase,
 	))
+	if err != nil {
+		log.Fatalf("Unable to create connection pool: %v", err)
+	}
+
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatalf("Unable to connect to database: %v, ", err)
+	}
+
+	return pool, err
 }

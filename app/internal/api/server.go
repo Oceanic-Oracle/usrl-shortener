@@ -4,40 +4,45 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
+	"os"
 	"url-shortener/internal/api/gen"
 	"url-shortener/internal/storage"
 	"url-shortener/internal/utils"
+
+	"google.golang.org/grpc"
 )
 
 type UrlService struct {
 	gen.UnimplementedUrlShortenerServer
-	logger      *slog.Logger
-	repositories *storage.Repositories
+	Logger      *slog.Logger
+	Repositories *storage.Repositories
 }
 
 func (r *UrlService) RegUrl(ctx context.Context, in *gen.RegUrlReq) (*gen.RegUrlResp, error) {
-	r.logger.Debug("Recived RegUrl")
+	r.Logger.Debug("Recived RegUrl")
 
 	var attempts int
     var shorturl string
     var err error
     for attempts < 5 {
         shorturl, err = utils.GenerateShortURL(in.Url, 10)
-        if err == nil {
-            break
+        if err != nil {
+            continue
         }
+		if err = r.Repositories.Url.SaveUrl(ctx, in.Url, shorturl); err == nil {
+			break
+		}
         attempts++
-        r.logger.Error("cannot get short url", slog.Any("error", err))
+        r.Logger.Error("cannot get short url", slog.Any("error", err))
     }
+
+	r.Logger.Debug(fmt.Sprintf("generated url: %s", shorturl))
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate short URL after %d attempts: %w", attempts + 1, err)
+		return nil, fmt.Errorf("err: %w", err)
 	}
-
-	r.logger.Debug(fmt.Sprintf("generated url: %s", shorturl))
-
-	if err := r.repositories.Url.SaveUrl(ctx, in.Url, shorturl); err != nil {
-		return nil, fmt.Errorf("failed to save short URL: %w", err)
-	}
+	
 	resp := &gen.RegUrlResp{
 		ShortUrl: shorturl,
 	}
@@ -46,15 +51,15 @@ func (r *UrlService) RegUrl(ctx context.Context, in *gen.RegUrlReq) (*gen.RegUrl
 }
 
 func (r *UrlService) GetUrl(ctx context.Context, in *gen.GetUrlReq) (*gen.GetUrlResp, error) {
-	r.logger.Debug("Recived GetUrl")
+	r.Logger.Debug("Recived GetUrl")
 
-	url, err := r.repositories.Url.GetUrl(ctx, in.ShortUrl)
+	url, err := r.Repositories.Url.GetUrl(ctx, in.ShortUrl)
 	if err != nil {
-		r.logger.Error("cannot get url", slog.Any("error", err))
+		r.Logger.Error("cannot get url", slog.Any("error", err))
 		return nil, fmt.Errorf("failed to get URL: %w", err)
 	}
 
-	r.logger.Debug(fmt.Sprintf("url: %s", url))
+	r.Logger.Debug(fmt.Sprintf("url: %s", url))
 
 	response := &gen.GetUrlResp{
 		Url: url,
@@ -62,6 +67,18 @@ func (r *UrlService) GetUrl(ctx context.Context, in *gen.GetUrlReq) (*gen.GetUrl
 	return response, nil
 }
 
-func NewClient(logger *slog.Logger, repositories *storage.Repositories) gen.UrlShortenerServer {
-	return &UrlService{logger: logger, repositories: repositories}
+func MustNewClient(s *grpc.Server, port string, logger *slog.Logger, repositories *storage.Repositories) {
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		logger.Error("Failed to listen", slog.Any("Error: ", err))
+		os.Exit(1)
+	}
+	srv := &UrlService{Logger: logger, Repositories: repositories}
+	gen.RegisterUrlShortenerServer(s, srv)
+	go func() {
+		logger.Info("url-shortener service started", slog.String("addr", port))
+		if err := s.Serve(lis); err != nil {
+			logger.Error("Failed to serve", slog.Any("error", err))
+		}
+	}()
 }
