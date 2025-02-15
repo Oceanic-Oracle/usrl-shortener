@@ -8,7 +8,7 @@ import (
 	"url-shortener/internal/config"
 	"url-shortener/internal/storage/url"
 	"url-shortener/internal/storage/url/inmemory"
-	"url-shortener/internal/storage/url/postgre"
+	"url-shortener/internal/storage/url/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -34,12 +34,12 @@ func NewClient(ctx context.Context, cfg *config.StorageCfg, logger *slog.Logger)
 			logger.Info("Successfull connect to PostgreSQL")
 		}
 		client = &Repositories{
-			Url:  postgre.New(pool, logger),
+			Url:  postgre_url.New(pool, logger),
 			pool: pool,
 		}
 	case inMemoryType:
 		client = &Repositories{
-			Url:  inmemory.New(logger),
+			Url:  inmemory_url.New(logger),
 			pool: nil,
 		}
 	default:

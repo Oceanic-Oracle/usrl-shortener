@@ -13,14 +13,14 @@ services:
 
   postgres:
     build:
-      context: ./postgre
+      context: ./postgres
       dockerfile: Dockerfile
     env_file:
-      - ./postgre/.env
+      - ./postgres/.env
     ports:
       - "5432:5432"
     volumes:
-      - ./postgre/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 2s

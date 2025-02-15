@@ -1,4 +1,4 @@
-package inmemory
+package inmemory_url
 
 import (
 	"context"

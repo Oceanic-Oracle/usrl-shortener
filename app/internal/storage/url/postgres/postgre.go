@@ -1,4 +1,4 @@
-package postgre
+package postgre_url
 
 import (
 	"context"
